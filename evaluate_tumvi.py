@@ -76,6 +76,8 @@ if __name__ == '__main__':
     parser.add_argument('--viz', action="store_true")
     parser.add_argument('--trials', type=int, default=1)
     parser.add_argument('--tumvidir', default="datasets/tum-vi")
+    parser.add_argument('--log', type=str)
+    parser.add_argument('--savetraj', action="store_true")
     args = parser.parse_args()
 
     cfg.merge_from_file(args.config)
@@ -86,16 +88,16 @@ if __name__ == '__main__':
     torch.manual_seed(1234)
 
     tumvi_scenes = [
-        # "corridor1",
-        # "corridor2",
-        # "corridor3",
-        # "corridor4",
-        # "corridor5",
+        "corridor1",
+        "corridor2",
+        "corridor3",
+        "corridor4",
+        "corridor5",
         # "magistrale1",
-        # "magistrale2",
-        # "magistrale3",
-        # "magistrale4",
-        # "magistrale5",
+        "magistrale2",
+        "magistrale3",
+        "magistrale4",
+        "magistrale5",
         # "magistrale6",
         "outdoors1",
         "outdoors2",
@@ -137,22 +139,41 @@ if __name__ == '__main__':
             traj_ref = file_interface.read_tum_trajectory_file(groundtruth)
             traj_est.timestamps /= 1e9
             traj_ref, traj_est = sync.associate_trajectories(traj_ref, traj_est)
-            file_interface.write_tum_trajectory_file(scene+'est.txt',traj_est)
-            file_interface.write_tum_trajectory_file(scene+'gt.txt',traj_ref)
+            if args.savetraj:
+                file_interface.write_tum_trajectory_file('traj/tumvi/' + scene+'est.txt',traj_est)
+                file_interface.write_tum_trajectory_file('traj/tumvi/' + scene+'gt.txt',traj_ref)
             result = main_ape.ape(traj_ref, traj_est, est_name='traj', 
                 pose_relation=PoseRelation.translation_part, align=True, correct_scale=True)
 
             scene_results.append(result.stats["rmse"])
 
         results[scene] = np.median(scene_results)
-        print(scene, sorted(scene_results))
+        if args.log:
+            with open(args.log, 'a+', encoding='utf-8') as f:
+                print(scene, sorted(scene_results),file=f)
+                print(scene, sorted(scene_results))
+        else:
+            print(scene, sorted(scene_results))
+        # print(scene, sorted(scene_results))
 
     xs = []
     for scene in results:
-        print(scene, results[scene])
+        if args.log:
+            with open(args.log, 'a+', encoding='utf-8') as f:
+                print(scene, results[scene], end='\n', file=f)
+                print(scene, results[scene])
+        else:
+            print(scene, results[scene])
+        # print(scene, results[scene])
         xs.append(results[scene])
 
-    print("AVG: ", np.mean(xs))
+    if args.log:
+        with open(args.log, 'a+', encoding='utf-8') as f:
+            print("AVG: ", np.mean(xs), end='\n', file=f)        
+            print("AVG: ", np.mean(xs))
+    else:
+        print("AVG: ", np.mean(xs))
+    # print("AVG: ", np.mean(xs))
 
     
 
