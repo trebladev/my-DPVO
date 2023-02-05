@@ -76,6 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('--viz', action="store_true")
     parser.add_argument('--trials', type=int, default=1)
     parser.add_argument('--eurocdir', default="datasets/EUROC")
+    parser.add_argument('--savetraj', action="store_true")
     args = parser.parse_args()
 
     cfg.merge_from_file(args.config)
@@ -118,6 +119,9 @@ if __name__ == '__main__':
 
             traj_ref = file_interface.read_tum_trajectory_file(groundtruth)
             traj_ref, traj_est = sync.associate_trajectories(traj_ref, traj_est)
+            if args.savetraj:
+                file_interface.write_tum_trajectory_file('traj/euroc/' + scene+'est.txt',traj_est)
+                file_interface.write_tum_trajectory_file('traj/euroc/' + scene+'gt.txt',traj_ref)
 
             result = main_ape.ape(traj_ref, traj_est, est_name='traj', 
                 pose_relation=PoseRelation.translation_part, align=True, correct_scale=True)
